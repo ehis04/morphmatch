@@ -1,0 +1,132 @@
+@import "tailwindcss";
+
+/*
+ * MorphMatch — "The Measuring Wall"
+ * Chalky cool paper, ink-navy figures, measuring-tape yellow accents and
+ * ruled lines everywhere measurements live. One red line for records.
+ */
+@theme {
+  --color-paper: #f4f6f2;
+  --color-card: #fdfefb;
+  --color-ink: #131c2b;
+  --color-ink-soft: #4c5870;
+  --color-ink-faint: #8b95a9;
+  --color-line: #d9e0e9;
+  --color-line-strong: #b9c3d2;
+  --color-tape: #f5b800;
+  --color-tape-deep: #d9a300;
+  --color-record: #e4382b;
+
+  --color-pitch: #1f7a46;
+  --color-court: #e8722a;
+  --color-clay: #7e9c22;
+  --color-pool: #1c86c8;
+
+  --font-display: "Bricolage Grotesque", "Arial Black", sans-serif;
+  --font-sans: "Instrument Sans", system-ui, sans-serif;
+  --font-mono: "Spline Sans Mono", ui-monospace, monospace;
+
+  --shadow-card: 0 1px 2px rgb(19 28 43 / 0.06), 0 8px 24px -12px rgb(19 28 43 / 0.18);
+  --shadow-lift: 0 2px 4px rgb(19 28 43 / 0.08), 0 16px 40px -16px rgb(19 28 43 / 0.28);
+}
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--color-tape);
+  color: var(--color-ink);
+}
+
+/* Ruled-paper backdrop used behind hero and comparison stages */
+.ruled {
+  background-image: repeating-linear-gradient(
+    to top,
+    transparent,
+    transparent 27px,
+    var(--color-line) 27px,
+    var(--color-line) 28px
+  );
+}
+
+/* Focus visibility without default outlines fighting the palette */
+:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Number inputs: keep spinners off so mono digits stay clean */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* Range slider (hero + forms) styled as a measuring tape */
+input[type="range"].tape-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(
+    to right,
+    var(--color-ink) 0%,
+    var(--color-ink) var(--fill, 50%),
+    var(--color-line) var(--fill, 50%),
+    var(--color-line) 100%
+  );
+}
+input[type="range"].tape-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--color-tape);
+  border: 3px solid var(--color-ink);
+  cursor: grab;
+}
+input[type="range"].tape-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-tape);
+  border: 3px solid var(--color-ink);
+  cursor: grab;
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.rise-in {
+  animation: rise-in 0.5s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise-in {
+    animation: none;
+  }
+  * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
