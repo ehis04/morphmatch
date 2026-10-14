@@ -1,0 +1,26 @@
+name: Production availability
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    env:
+      SITE_URL: ${{ vars.PRODUCTION_SITE_URL || 'https://morphmatch.vercel.app' }}
+    steps:
+      - name: Verify public pages and metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          for path in / /match /athletes /versus /privacy /robots.txt /sitemap.xml /icon.svg /apple-icon /opengraph-image; do
+            curl --fail --silent --show-error --retry 2 --retry-delay 2 --max-time 20 \
+              --output /dev/null "${SITE_URL%/}${path}"
+            echo "OK ${path}"
+          done

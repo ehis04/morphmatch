@@ -36,8 +36,8 @@ Open http://localhost:3000. Everything except sign-in and saved comparisons work
 | `npm run dev`                     | Dev server with hot reload                                                               |
 | `npm run build`                   | Production build                                                                         |
 | `npm run check:production`        | Validate public production origins and account settings                                  |
-| `npm run build:production`        | Validate production settings, then build                                                 |
-| `npm run prepare:production`      | Validate settings, quality checks and production audit, then build (used by Vercel)      |
+| `npm run build:production`        | Validate settings, lint/types, regressions and production audit, then build (Vercel)     |
+| `npm run prepare:production`      | Verify source formatting, then run the guarded production build                          |
 | `npm run lint`                    | ESLint (Next core-web-vitals + TypeScript rules)                                         |
 | `npm run typecheck`               | TypeScript, no emit                                                                      |
 | `npm run format` / `format:check` | Prettier write / verify                                                                  |
