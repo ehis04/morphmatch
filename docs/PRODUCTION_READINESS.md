@@ -1,5 +1,7 @@
 # Production readiness — 12 October 2026
 
+**Deployment update — 14 October 2026:** the public matching/comparison site is deployed at [morphmatch.vercel.app](https://morphmatch.vercel.app). A hosted Supabase database and protected account preview are configured; public accounts await verified SMTP. Current deployment details are in [the launch record](LAUNCH.md).
+
 MorphMatch is a responsive Next.js website. This repository has no separate native iOS or Android application, mobile store package or offline service worker. The same web deployment serves desktop and mobile browsers.
 
 The complete journey is measurements → local matching and comparison → optional Supabase save → saved comparison reopening or deletion. Public head-to-head links contain athlete IDs and the display mode; reopening personal measurements uses device state rather than putting those measurements into a URL.
@@ -36,7 +38,7 @@ The public matrix needed three serial reruns after host memory pressure caused b
 
 ## Production configuration
 
-- Use Node.js 22+, HTTPS and a real public `SITE_URL` containing only the origin. Set it before building, and keep the same value at runtime.
+- Use Node.js 22.x, HTTPS and a real public `SITE_URL` containing only the origin. Set it before building, and keep the same value at runtime.
 - Accounts are optional. With accounts disabled, leave both Supabase key aliases and its URL empty, and leave Google sign-in disabled.
 - With accounts enabled, use the hosted project's HTTPS URL and public publishable/anon key. Apply migrations `0001` through `0004` in order. Keep secret/service-role keys out of browser variables.
 - Configure the hosted Supabase Site URL, the exact `/auth/callback` redirect allow-list and a production email sender. Test confirmation, resend and recovery with your own address. Supabase's [built-in SMTP is for testing](https://supabase.com/docs/guides/auth/auth-smtp).
@@ -44,7 +46,7 @@ The public matrix needed three serial reruns after host memory pressure caused b
 
 `npm run check:production` checks environment syntax, HTTPS/public origins, local API mistakes, public key types and Google prerequisites. It never prints keys or contacts hosted services. It cannot certify SMTP, OAuth credentials or database migrations.
 
-The committed `vercel.json` uses `npm run build:production`, so an incomplete production environment stops the build. Vercel preview builds can use the automatically provided `VERCEL_URL` when `SITE_URL` is absent; set `SITE_URL` for the Production environment. Preview authentication also needs its exact callback allowed in the selected Supabase project. [Vercel system variables](https://vercel.com/docs/environment-variables/system-environment-variables).
+The committed `vercel.json` uses `npm run prepare:production`, so incomplete production settings, lint/type/format failures, regression failures or a failed production audit stop the deployment build. Vercel preview builds can use the automatically provided `VERCEL_URL` when `SITE_URL` is absent; set `SITE_URL` for the Production environment. Preview authentication also needs its exact callback allowed in the selected Supabase project. [Vercel system variables](https://vercel.com/docs/environment-variables/system-environment-variables).
 
 ## Verification and release
 

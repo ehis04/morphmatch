@@ -17,7 +17,7 @@ Built with Next.js 16, React 19, Tailwind CSS 4, TypeScript and Supabase. Matchi
 
 ## Quick start (VS Code / local)
 
-Requires Node.js 22+ (the Supabase SDK requires Node 22).
+Requires Node.js 22.x, matching CI and the production runtime. If you use nvm, run `nvm use` first.
 
 ```bash
 git clone <your-repo-url> morphmatch
@@ -36,8 +36,8 @@ Open http://localhost:3000. Everything except sign-in and saved comparisons work
 | `npm run dev`                     | Dev server with hot reload                                                               |
 | `npm run build`                   | Production build                                                                         |
 | `npm run check:production`        | Validate public production origins and account settings                                  |
-| `npm run build:production`        | Validate production settings, then build (used by Vercel)                                |
-| `npm run prepare:production`      | Validate settings, quality checks and production audit, then create the final build      |
+| `npm run build:production`        | Validate production settings, then build                                                 |
+| `npm run prepare:production`      | Validate settings, quality checks and production audit, then build (used by Vercel)      |
 | `npm run lint`                    | ESLint (Next core-web-vitals + TypeScript rules)                                         |
 | `npm run typecheck`               | TypeScript, no emit                                                                      |
 | `npm run format` / `format:check` | Prettier write / verify                                                                  |
@@ -92,7 +92,7 @@ The anon key is safe to expose in the browser — that's what it's for; data acc
 
 1. Push the repo to GitHub (below).
 2. At [vercel.com/new](https://vercel.com/new), import the repository. The committed `vercel.json` selects Next.js and runs the production environment check before building.
-3. Set `SITE_URL` to your real public HTTPS origin **before building**, to populate sitemap and social metadata. Use Node.js 22 or later. Production builds reject missing or placeholder origins; previews can use Vercel's own preview URL when `SITE_URL` is absent.
+3. Set `SITE_URL` to your real public HTTPS origin **before building**, to populate sitemap and social metadata. Use Node.js 22.x. Production builds reject missing or placeholder origins; previews can use Vercel's own preview URL when `SITE_URL` is absent.
 4. If you want accounts, configure the Supabase public URL/key in the hosting environment, apply all database migrations, configure SMTP and callback URLs as above, then redeploy. Leave the Supabase variables empty for a public matching-only site.
 5. Run the verification commands below, then configure the real hosted environment and run `npm run prepare:production` to create the final artifact. After deployment, test the public domain, real phone sharing, sign-up confirmation/resend, recovery, save/reopen/delete and sign-out. Local credentials are for local development only.
 
