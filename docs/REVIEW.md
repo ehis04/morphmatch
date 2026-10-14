@@ -1,5 +1,7 @@
 **MorphMatch publication review — 11 October 2026**
 
+**Deployment update — 14 October 2026:** the public website is live at [morphmatch.vercel.app](https://morphmatch.vercel.app). Hosted accounts await verified email delivery. Current deployment and verification details are in [the launch record](LAUNCH.md).
+
 The follow-up finishing phases and expanded mobile verification are recorded in [Production readiness — 12 October 2026](PRODUCTION_READINESS.md). The findings and test counts below describe the original review.
 
 The review covered the application routes, components, matching engine, bundled athlete data, persistence, Supabase authentication and database permissions, dependencies, build configuration and CI. Existing local database/setup changes were retained. This work prepares the repository for deployment; no public deployment was created.

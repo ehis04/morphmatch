@@ -4,6 +4,8 @@
 
 Built with Next.js 16, React 19, Tailwind CSS 4, TypeScript and Supabase. Matching needs no backend; accounts use a separately configured Supabase project.
 
+**Live:** [morphmatch.vercel.app](https://morphmatch.vercel.app). Matching, browsing, comparisons and sharing are available. Hosted accounts are tested on a protected preview and await verified email delivery before public activation. See the [launch record](docs/LAUNCH.md) for current services, verification and remaining setup.
+
 ## Features
 
 - **Find my match** — a weighted similarity engine scores every athlete against your measurements (height, weight, wingspan and ape index), with a "Surprise me" reroll weighted toward your best matches
@@ -96,7 +98,7 @@ The anon key is safe to expose in the browser — that's what it's for; data acc
 4. If you want accounts, configure the Supabase public URL/key in the hosting environment, apply all database migrations, configure SMTP and callback URLs as above, then redeploy. Leave the Supabase variables empty for a public matching-only site.
 5. Run the verification commands below, then configure the real hosted environment and run `npm run prepare:production` to create the final artifact. After deployment, test the public domain, real phone sharing, sign-up confirmation/resend, recovery, save/reopen/delete and sign-out. Local credentials are for local development only.
 
-The phased implementation, verification evidence and final hosting steps are in [`docs/PRODUCTION_READINESS.md`](docs/PRODUCTION_READINESS.md). A production domain, hosted account settings and deployment remain required before a public launch.
+The phased implementation and earlier verification evidence are in [`docs/PRODUCTION_READINESS.md`](docs/PRODUCTION_READINESS.md). The existing public deployment and remaining account activation steps are recorded in [`docs/LAUNCH.md`](docs/LAUNCH.md). The instructions above also cover setting up a separate deployment.
 
 The included GitHub Actions workflow ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs lint, types, formatting, regression checks, a production build, production dependency auditing and browser tests on pushes and pull requests. Its build explicitly disables accounts to exercise that supported deployment mode.
 

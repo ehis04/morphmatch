@@ -8,12 +8,12 @@ The complete journey is measurements → local matching and comparison → optio
 
 ## Phases
 
-| Phase                     | Deliverable                                                                                                                                                                          | Status                                                      |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------- |
-| 1. Experience review      | Audit public, account and saved journeys; confirm mobile scope and narrow-screen gaps.                                                                                               | Complete                                                    |
-| 2. Finish the experience  | Sharing with native/clipboard/manual fallbacks; reset and field errors; saved measurement reopening; confirmation resend and password-change entry; phone controls and layout fixes. | Complete                                                    |
-| 3. Release verification   | Regressions, database integration, production builds and desktop/Android/iOS/320px browser checks, including recovery and storage failures.                                          | Complete                                                    |
-| 4. Production preparation | Environment validation, Vercel configuration, CI, social preview and Apple icon, release command and live-launch checklist.                                                          | Repository preparation complete; live hosting setup remains |
+| Phase                     | Deliverable                                                                                                                                                                          | Status                                                     |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
+| 1. Experience review      | Audit public, account and saved journeys; confirm mobile scope and narrow-screen gaps.                                                                                               | Complete                                                   |
+| 2. Finish the experience  | Sharing with native/clipboard/manual fallbacks; reset and field errors; saved measurement reopening; confirmation resend and password-change entry; phone controls and layout fixes. | Complete                                                   |
+| 3. Release verification   | Regressions, database integration, production builds and desktop/Android/iOS/320px browser checks, including recovery and storage failures.                                          | Complete                                                   |
+| 4. Production preparation | Environment validation, Vercel configuration, CI, social preview and Apple icon, release command and live-launch checklist.                                                          | Public site live; account activation awaits verified email |
 
 ## Completed changes and evidence
 
@@ -34,7 +34,7 @@ The complete journey is measurements → local matching and comparison → optio
 | Production dependency audit                              | Zero reported vulnerabilities. Development-tooling limitations are retained in the original review.                                                                                                                         |
 | Production guard                                         | Rejects the current local API/missing public origin, secret browser keys, invalid Google settings and local/private/placeholder origins, including trailing-dot DNS forms. Valid release fixtures pass.                     |
 
-The public matrix needed three serial reruns after host memory pressure caused browser crashes/timeouts; all passed with one worker. The account suite needed a test-fixture correction to insert through its authenticated owner rather than the deliberately restricted service role; all three corrected flows passed. No database privileges were broadened. A read-only cleanup check found zero disposable test accounts remaining. CI has been configured but cannot be certified locally until it runs on the pushed revision.
+The public matrix needed three serial reruns after host memory pressure caused browser crashes/timeouts; all passed with one worker. The account suite needed a test-fixture correction to insert through its authenticated owner rather than the deliberately restricted service role; all three corrected flows passed. No database privileges were broadened. A read-only cleanup check found zero disposable test accounts remaining. These are the 12 October local results; subsequent successful GitHub CI and hosted verification are recorded in [the launch record](LAUNCH.md).
 
 ## Production configuration
 
@@ -78,4 +78,4 @@ This checks production settings, lint, types, formatting, regressions and the pr
 3. If using accounts, verify real email confirmation/resend/recovery, save/reopen/delete, sign-out and Google if enabled. Use a separate test account; avoid testing with existing customer data.
 4. Check hosting errors after the first real sessions. Retain the previous deployment for rollback; the new migrations preserve existing rows.
 
-The chosen production domain, hosted Supabase provider/SMTP settings and actual deployment are external setup tasks. No public deployment or native mobile package has been created by this readiness work. Dataset sourcing and upstream lint-tooling limitations remain documented in [the original review](REVIEW.md).
+The public website and hosted database have since been deployed; see [the launch record](LAUNCH.md). Verified SMTP and real email-flow checks remain before public accounts can be activated. The repository contains no native mobile package. Dataset sourcing and upstream lint-tooling limitations remain documented in [the original review](REVIEW.md).
