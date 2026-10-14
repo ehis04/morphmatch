@@ -31,6 +31,8 @@ The deployment build runs `npm run build:production`: environment validation, li
 
 Node.js is pinned to major 22 in the package, lockfile, `.nvmrc` and hosting settings. Generated Vercel/Supabase state is excluded from source-quality checks so linking a project does not break local verification.
 
+The function region is pinned to `dub1` in `vercel.json` so automatic Git deployments stay near the Ireland database; a one-off CLI deployment region does not persist to later Git builds.
+
 ## Remaining owner setup
 
 1. Configure a verified SMTP provider/sender in the new Supabase project's Authentication email settings. This requires an email-provider account and, normally, control of a sending domain and its DNS. Do not use the restricted default sender for public registration.
