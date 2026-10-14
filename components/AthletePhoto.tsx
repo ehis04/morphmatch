@@ -1,35 +1,17 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
+import { createPhotoStore } from "@/lib/athlete-photo";
 import type { Athlete } from "@/lib/types";
 
-/**
- * Freely licensed athlete photo via the Wikipedia REST summary endpoint.
- * Results (including misses) are cached for the session. When no usable
- * image exists the sport-tinted silhouette avatar takes its place — the
- * comparison always works either way.
- */
+const photos = createPhotoStore();
+const serverSnapshot = () => undefined;
 
-const cache = new Map<string, string | null>();
-
-async function fetchThumb(slug: string): Promise<string | null> {
-  if (cache.has(slug)) return cache.get(slug)!;
-  try {
-    const res = await fetch(
-      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(slug)}`,
-      { headers: { Accept: "application/json" } }
-    );
-    if (!res.ok) throw new Error(String(res.status));
-    const json = await res.json();
-    const url: string | undefined = json?.thumbnail?.source;
-    const upscaled = url ? url.replace(/\/(\d+)px-/, "/480px-") : null;
-    cache.set(slug, upscaled ?? null);
-    return upscaled ?? null;
-  } catch {
-    cache.set(slug, null);
-    return null;
-  }
+function usePhoto(slug: string) {
+  const subscribe = useCallback((listener: () => void) => photos.subscribe(slug, listener), [slug]);
+  const snapshot = useCallback(() => photos.get(slug), [slug]);
+  return useSyncExternalStore(subscribe, snapshot, serverSnapshot);
 }
 
 const SPORT_TINT: Record<Athlete["sport"], string> = {
@@ -48,43 +30,62 @@ export function AthletePhoto({
   className?: string;
   sizes?: string;
 }) {
-  const [loaded, setLoaded] = useState<{ slug: string; url: string | null } | null>(null);
+  const ref = useRef<HTMLDivElement>(null);
+  const photo = usePhoto(athlete.wiki);
 
   useEffect(() => {
-    let alive = true;
-    fetchThumb(athlete.wiki).then((url) => {
-      if (alive) setLoaded({ slug: athlete.wiki, url });
-    });
-    return () => {
-      alive = false;
-    };
+    const element = ref.current;
+    if (!element) return;
+    if (!("IntersectionObserver" in window)) {
+      void photos.load(athlete.wiki);
+      return;
+    }
+    // Hidden side portraits and offscreen cards do not trigger photo requests.
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          void photos.load(athlete.wiki);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "150px" }
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
   }, [athlete.wiki]);
 
-  const current = loaded?.slug === athlete.wiki ? loaded : null;
-  const src: string | null | "loading" = current ? current.url : "loading";
-
+  const credit = photo
+    ? `${photo.author} · ${photo.license} · ${photo.licenseUrl}. Cropped to fit.`
+    : "";
   return (
-    <div className={`relative overflow-hidden bg-line ${className}`}>
-      {src && src !== "loading" ? (
-        <Image
-          src={src}
-          alt={athlete.name}
-          fill
-          sizes={sizes}
-          className="object-cover object-top"
-          unoptimized
-        />
+    <div ref={ref} className={`relative overflow-hidden bg-line ${className}`}>
+      {photo ? (
+        <>
+          <Image
+            src={photo.url}
+            alt={athlete.name}
+            fill
+            sizes={sizes}
+            className="object-cover object-top"
+            onError={() => photos.reject(athlete.wiki)}
+          />
+          <span
+            title={credit}
+            className="absolute bottom-0 right-0 rounded-tl bg-ink/85 px-1 text-[10px] text-paper"
+          >
+            <span aria-hidden>ⓘ</span>
+            <span className="sr-only">Photo credit: {credit}</span>
+          </span>
+        </>
       ) : (
         <div
           className="flex h-full w-full items-end justify-center"
           style={{
-            backgroundColor:
-              "color-mix(in srgb, " + SPORT_TINT[athlete.sport] + " 14%, var(--color-card))",
+            backgroundColor: `color-mix(in srgb, ${SPORT_TINT[athlete.sport]} 14%, var(--color-card))`,
           }}
           aria-hidden
         >
-          {/* head-and-shoulders placeholder */}
-          <svg viewBox="0 0 100 90" className={src === "loading" ? "w-3/5 animate-pulse" : "w-3/5"}>
+          <svg viewBox="0 0 100 90" className="w-3/5">
             <circle cx="50" cy="34" r="16" fill={SPORT_TINT[athlete.sport]} opacity="0.55" />
             <path
               d="M 18 90 C 18 66 34 56 50 56 C 66 56 82 66 82 90 Z"
@@ -98,16 +99,38 @@ export function AthletePhoto({
   );
 }
 
-/** Small attribution link shown near photos. */
+/** Actual file/author/license attribution; article link when no photo is available. */
 export function WikiCredit({ athlete }: { athlete: Athlete }) {
+  const photo = usePhoto(athlete.wiki);
+  const linkClass =
+    "inline-flex min-h-11 min-w-11 max-w-full items-center break-words py-2 align-middle underline-offset-2 hover:underline";
+  if (!photo) {
+    return (
+      <a
+        href={`https://en.wikipedia.org/wiki/${encodeURIComponent(athlete.wiki)}`}
+        target="_blank"
+        rel="noreferrer"
+        className={`text-[11px] text-ink-soft ${linkClass}`}
+      >
+        Wikipedia
+      </a>
+    );
+  }
   return (
-    <a
-      href={`https://en.wikipedia.org/wiki/${athlete.wiki}`}
-      target="_blank"
-      rel="noreferrer"
-      className="text-[11px] text-ink-faint underline-offset-2 hover:underline"
-    >
-      Photo · Wikipedia
-    </a>
+    <span className="min-w-0 break-words text-[11px] leading-relaxed text-ink-soft">
+      <a
+        href={photo.sourceUrl}
+        target="_blank"
+        rel="noreferrer"
+        className={linkClass}
+        title={`Photo by ${photo.author}; cropped to fit`}
+      >
+        Photo: {photo.author}
+      </a>
+      {" · "}
+      <a href={photo.licenseUrl} target="_blank" rel="noreferrer" className={linkClass}>
+        {photo.license}
+      </a>
+    </span>
   );
 }

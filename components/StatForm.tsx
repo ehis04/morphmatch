@@ -1,32 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import { z } from "zod";
+import { useId, useState } from "react";
 import type { Profile } from "@/lib/profile";
-import { cmToFeetInches, feetInchesToCm, kgToLbs, lbsToKg, type UnitSystem } from "@/lib/units";
+import { getProfileErrors } from "@/lib/profile-validation";
+import {
+  cmToFeetInches,
+  kgToLbs,
+  lbsToKg,
+  parseImperialLength,
+  type UnitSystem,
+} from "@/lib/units";
 
-const profileSchema = z.object({
-  heightCm: z
-    .number()
-    .min(120, "Height must be at least 120 cm / 3′11″")
-    .max(240, "Height must be at most 240 cm / 7′10″"),
-  weightKg: z
-    .number()
-    .min(30, "Weight must be at least 30 kg / 66 lb")
-    .max(200, "Weight must be at most 200 kg / 441 lb"),
-  wingspanCm: z
-    .number()
-    .min(120, "Wingspan must be at least 120 cm")
-    .max(260, "Wingspan must be at most 260 cm")
-    .optional(),
-  gender: z.enum(["m", "f"]),
-});
-
-export function validateProfile(p: Profile): string | null {
-  const result = profileSchema.safeParse(p);
-  if (result.success) return null;
-  return result.error.issues[0]?.message ?? "Check your measurements";
-}
+export { validateProfile } from "@/lib/profile-validation";
 
 interface StatFormProps {
   profile: Profile;
@@ -39,35 +24,41 @@ interface StatFormProps {
  * mode converts at the input boundary so switching units never loses data.
  */
 export function StatForm({ profile, onChange, system }: StatFormProps) {
-  const error = validateProfile(profile);
+  const errors = getProfileErrors(profile);
+  const errorId = useId();
+  const errorFor = (field: keyof Profile) => (errors[field] ? `${errorId}-${field}` : undefined);
 
   return (
     <div className="space-y-5">
       <Field label="Height" hint={system === "metric" ? "cm" : "ft / in"}>
         {system === "metric" ? (
           <NumberInput
-            value={Math.round(profile.heightCm)}
+            value={profile.heightCm}
             onChange={(v) => onChange({ ...profile, heightCm: v })}
             min={120}
             max={240}
             ariaLabel="Height in centimetres"
+            errorId={errorFor("heightCm")}
           />
         ) : (
           <FeetInches
             cm={profile.heightCm}
             onChange={(cm) => onChange({ ...profile, heightCm: cm })}
             ariaLabel="Height"
+            errorId={errorFor("heightCm")}
           />
         )}
       </Field>
 
       <Field label="Weight" hint={system === "metric" ? "kg" : "lb"}>
         <NumberInput
-          value={system === "metric" ? Math.round(profile.weightKg) : kgToLbs(profile.weightKg)}
+          key={system}
+          value={system === "metric" ? profile.weightKg : kgToLbs(profile.weightKg)}
           onChange={(v) => onChange({ ...profile, weightKg: system === "metric" ? v : lbsToKg(v) })}
-          min={system === "metric" ? 30 : 66}
-          max={system === "metric" ? 200 : 441}
+          min={system === "metric" ? 30 : 66.2}
+          max={system === "metric" ? 200 : 440.9}
           ariaLabel={`Weight in ${system === "metric" ? "kilograms" : "pounds"}`}
+          errorId={errorFor("weightKg")}
         />
       </Field>
 
@@ -78,13 +69,14 @@ export function StatForm({ profile, onChange, system }: StatFormProps) {
       >
         {system === "metric" ? (
           <NumberInput
-            value={profile.wingspanCm != null ? Math.round(profile.wingspanCm) : ""}
+            value={profile.wingspanCm ?? ""}
             onChange={(v) => onChange({ ...profile, wingspanCm: v })}
             onClear={() => onChange({ ...profile, wingspanCm: undefined })}
             min={120}
             max={260}
             placeholder={`≈ ${Math.round(profile.heightCm)}`}
             ariaLabel="Wingspan in centimetres"
+            errorId={errorFor("wingspanCm")}
           />
         ) : (
           <FeetInches
@@ -93,12 +85,18 @@ export function StatForm({ profile, onChange, system }: StatFormProps) {
             onChange={(cm) => onChange({ ...profile, wingspanCm: cm })}
             onClear={() => onChange({ ...profile, wingspanCm: undefined })}
             ariaLabel="Wingspan"
+            errorId={errorFor("wingspanCm")}
           />
         )}
       </Field>
 
       <Field label="Build proportions" sub="Used to shape your silhouette, nothing else.">
-        <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Build proportions">
+        <div
+          className="grid grid-cols-2 gap-2"
+          role="group"
+          aria-label="Build proportions"
+          aria-describedby={errorFor("gender")}
+        >
           {(
             [
               ["m", "Male"],
@@ -108,8 +106,7 @@ export function StatForm({ profile, onChange, system }: StatFormProps) {
             <button
               key={value}
               type="button"
-              role="radio"
-              aria-checked={profile.gender === value}
+              aria-pressed={profile.gender === value}
               onClick={() => onChange({ ...profile, gender: value })}
               className={`rounded-md border px-3 py-2 text-sm font-semibold transition-colors ${
                 profile.gender === value
@@ -123,13 +120,18 @@ export function StatForm({ profile, onChange, system }: StatFormProps) {
         </div>
       </Field>
 
-      {error && (
-        <p
+      {Object.keys(errors).length > 0 && (
+        <div
           role="alert"
+          id={errorId}
           className="rounded-md bg-record/10 px-3 py-2 text-sm font-medium text-record"
         >
-          {error}
-        </p>
+          {Object.entries(errors).map(([field, message]) => (
+            <p key={field} id={`${errorId}-${field}`}>
+              {message}
+            </p>
+          ))}
+        </div>
       )}
     </div>
   );
@@ -166,6 +168,7 @@ function NumberInput({
   max,
   placeholder,
   ariaLabel,
+  errorId,
 }: {
   value: number | "";
   onChange: (v: number) => void;
@@ -174,15 +177,18 @@ function NumberInput({
   max: number;
   placeholder?: string;
   ariaLabel: string;
+  errorId?: string;
 }) {
-  const [text, setText] = useState(value === "" ? "" : String(value));
+  const displayValue =
+    value === "" || !Number.isFinite(value) ? "" : String(Number(value.toFixed(2)));
+  const [text, setText] = useState(displayValue);
   const [prevValue, setPrevValue] = useState(value);
 
   // Adjust state during render when the canonical value changes from outside
   // (e.g. a unit switch) — the React-recommended replacement for a sync effect.
-  if (prevValue !== value) {
+  if (!Object.is(prevValue, value)) {
     setPrevValue(value);
-    setText(value === "" ? "" : String(value));
+    setText(displayValue);
   }
 
   return (
@@ -192,19 +198,24 @@ function NumberInput({
       value={text}
       min={min}
       max={max}
+      step="any"
+      required={!onClear}
       placeholder={placeholder}
       aria-label={ariaLabel}
+      aria-invalid={errorId ? true : undefined}
+      aria-describedby={errorId}
       onChange={(e) => {
         const t = e.target.value;
         setText(t);
         if (t === "") {
-          onClear?.();
+          if (onClear && !e.target.validity.badInput) onClear();
+          else onChange(Number.NaN);
           return;
         }
         const v = Number(t);
-        if (!Number.isNaN(v)) onChange(v);
+        onChange(v);
       }}
-      className="w-full rounded-md border border-line bg-card px-3 py-2 font-mono text-base tabular-nums outline-none transition-colors focus:border-ink"
+      className={`w-full rounded-md border ${errorId ? "border-record" : "border-line"} bg-card px-3 py-2 font-mono text-base tabular-nums outline-none transition-colors focus:border-ink`}
     />
   );
 }
@@ -215,17 +226,43 @@ function FeetInches({
   onChange,
   onClear,
   ariaLabel,
+  errorId,
 }: {
   cm: number | null;
   placeholderCm?: number;
   onChange: (cm: number) => void;
   onClear?: () => void;
   ariaLabel: string;
+  errorId?: string;
 }) {
-  const fi = cm != null ? cmToFeetInches(cm) : null;
-  const ph = placeholderCm != null ? cmToFeetInches(placeholderCm) : null;
+  const toDraft = (value: number | null) => {
+    if (value == null || !Number.isFinite(value)) return { feet: "", inches: "" };
+    const fi = cmToFeetInches(value);
+    return { feet: String(fi.feet), inches: String(fi.inches) };
+  };
+  const [draft, setDraft] = useState(() => toDraft(cm));
+  const [previousCm, setPreviousCm] = useState(cm);
+  const ph =
+    placeholderCm != null && Number.isFinite(placeholderCm) ? cmToFeetInches(placeholderCm) : null;
 
-  const update = (feet: number, inches: number) => onChange(feetInchesToCm(feet, inches));
+  if (!Object.is(previousCm, cm)) {
+    setPreviousCm(cm);
+    setDraft(toDraft(cm));
+  }
+
+  const update = (part: "feet" | "inches", text: string, badInput: boolean) => {
+    const next = { ...draft, [part]: text };
+    setDraft(next);
+    if (next.feet === "" && next.inches === "" && onClear && !badInput) {
+      setPreviousCm(null);
+      onClear();
+      return;
+    }
+    const value = parseImperialLength(next.feet, next.inches);
+    // Preserve the two draft fields through our own canonical updates.
+    setPreviousCm(value);
+    onChange(value);
+  };
 
   return (
     <div className="grid grid-cols-2 gap-2">
@@ -234,19 +271,16 @@ function FeetInches({
           type="number"
           inputMode="numeric"
           min={3}
-          max={7}
-          value={fi?.feet ?? ""}
+          max={8}
+          step={1}
+          required={!onClear || draft.inches !== ""}
+          value={draft.feet}
           placeholder={ph ? String(ph.feet) : undefined}
-          aria-label={`${ariaLabel} — feet`}
-          onChange={(e) => {
-            if (e.target.value === "") {
-              onClear?.();
-              return;
-            }
-            const f = Number(e.target.value);
-            if (!Number.isNaN(f)) update(f, fi?.inches ?? 0);
-          }}
-          className="w-full rounded-md border border-line bg-card px-3 py-2 pr-8 font-mono text-base tabular-nums outline-none transition-colors focus:border-ink"
+          aria-label={`${ariaLabel} feet`}
+          aria-invalid={errorId ? true : undefined}
+          aria-describedby={errorId}
+          onChange={(e) => update("feet", e.target.value, e.target.validity.badInput)}
+          className={`w-full rounded-md border ${errorId ? "border-record" : "border-line"} bg-card px-3 py-2 pr-8 font-mono text-base tabular-nums outline-none transition-colors focus:border-ink`}
         />
         <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-ink-faint">
           ft
@@ -255,17 +289,18 @@ function FeetInches({
       <div className="relative">
         <input
           type="number"
-          inputMode="numeric"
+          inputMode="decimal"
           min={0}
-          max={11}
-          value={fi?.inches ?? ""}
+          max={11.99}
+          step="any"
+          required={!onClear || draft.feet !== ""}
+          value={draft.inches}
           placeholder={ph ? String(ph.inches) : undefined}
-          aria-label={`${ariaLabel} — inches`}
-          onChange={(e) => {
-            const i = Number(e.target.value);
-            if (!Number.isNaN(i)) update(fi?.feet ?? ph?.feet ?? 5, i);
-          }}
-          className="w-full rounded-md border border-line bg-card px-3 py-2 pr-8 font-mono text-base tabular-nums outline-none transition-colors focus:border-ink"
+          aria-label={`${ariaLabel} inches`}
+          aria-invalid={errorId ? true : undefined}
+          aria-describedby={errorId}
+          onChange={(e) => update("inches", e.target.value, e.target.validity.badInput)}
+          className={`w-full rounded-md border ${errorId ? "border-record" : "border-line"} bg-card px-3 py-2 pr-8 font-mono text-base tabular-nums outline-none transition-colors focus:border-ink`}
         />
         <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-ink-faint">
           in

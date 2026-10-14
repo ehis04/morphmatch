@@ -12,19 +12,32 @@ for (const a of ATHLETES) {
     errors++;
   }
   ids.add(a.id);
+  if (
+    !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(a.id) ||
+    !a.name.trim() ||
+    !a.league.trim() ||
+    !a.wiki.trim()
+  ) {
+    console.error("INVALID ATHLETE METADATA:", a.id);
+    errors++;
+  }
   if (!/^[A-Z]{2}$/.test(a.country)) {
     console.error("BAD COUNTRY:", a.id, a.country);
     errors++;
   }
-  if (a.heightCm < 150 || a.heightCm > 235) {
+  if (!Number.isFinite(a.heightCm) || a.heightCm < 150 || a.heightCm > 235) {
     console.error("SUSPECT HEIGHT:", a.id, a.heightCm);
     errors++;
   }
-  if (a.weightKg < 45 || a.weightKg > 150) {
+  if (!Number.isFinite(a.weightKg) || a.weightKg < 45 || a.weightKg > 150) {
     console.error("SUSPECT WEIGHT:", a.id, a.weightKg);
     errors++;
   }
-  if (a.wingspanCm < a.heightCm * 0.92 || a.wingspanCm > a.heightCm * 1.15) {
+  if (
+    !Number.isFinite(a.wingspanCm) ||
+    a.wingspanCm < a.heightCm * 0.92 ||
+    a.wingspanCm > a.heightCm * 1.15
+  ) {
     console.error("SUSPECT WINGSPAN:", a.id, a.wingspanCm);
     errors++;
   }
@@ -43,7 +56,7 @@ console.log(
 for (const a of ATHLETES) {
   const fig = buildFigure(a);
   const json = JSON.stringify(fig);
-  if (json.includes("NaN") || json.includes("null,")) {
+  if (json.includes("NaN") || json.includes("Infinity") || /:\s*null\b/.test(json)) {
     console.error("GEOMETRY NaN:", a.id);
     errors++;
   }

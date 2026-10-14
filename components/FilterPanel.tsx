@@ -61,9 +61,18 @@ export function FilterPanel({ filters, onChange }: FilterPanelProps) {
               key={sport}
               type="button"
               aria-pressed={on}
-              onClick={() =>
-                onChange({ ...filters, sports: toggle(filters.sports, sport), leagues: [] })
-              }
+              onClick={() => {
+                const sports = toggle(filters.sports, sport);
+                const availableCountries = countriesFor(sports);
+                onChange({
+                  ...filters,
+                  sports,
+                  leagues: [],
+                  countries: filters.countries.filter((country) =>
+                    availableCountries.includes(country)
+                  ),
+                });
+              }}
               className={`rounded-full border px-3 py-1 text-sm font-semibold transition-colors ${
                 on
                   ? "border-transparent text-white"

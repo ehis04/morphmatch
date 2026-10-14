@@ -6,35 +6,51 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "check:production": "tsx scripts/production-check.ts",
+    "build:production": "npm run check:production && next build",
+    "prepare:production": "npm run check:production && npm run lint && npm run typecheck && npm run format:check && npm test && npm audit --omit=dev && next build",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "smoke": "tsx scripts/smoke.ts"
+    "smoke": "tsx scripts/smoke.ts",
+    "db:start": "supabase start",
+    "db:stop": "supabase stop",
+    "db:status": "supabase status",
+    "db:env": "node scripts/db-env.mjs",
+    "db:setup": "npm run db:start && npm run db:env",
+    "db:reset": "supabase db reset --local",
+    "test:e2e": "playwright test",
+    "verify": "npm run lint && npm run typecheck && npm run format:check && npm test && npm run build",
+    "test": "npm run smoke && tsx scripts/matching-regression.ts && tsx scripts/comparison.test.tsx && tsx scripts/accounts-regression.ts && tsx scripts/proxy-regression.ts && tsx scripts/deployment-regression.ts && tsx scripts/production-regression.ts",
+    "test:accounts": "tsx scripts/accounts-integration.ts"
   },
   "dependencies": {
+    "@next/env": "^16.4.0",
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.110.2",
     "clsx": "^2.1.1",
-    "next": "^16.2.10",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
+    "next": "^16.4.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.64.0",
     "@tailwindcss/postcss": "^4.3.2",
     "@types/node": "^24.0.0",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "eslint": "^9.39.0",
-    "eslint-config-next": "^16.2.10",
+    "eslint-config-next": "^16.4.0",
     "prettier": "^3.6.0",
     "tailwindcss": "^4.3.2",
     "tsx": "^4.23.0",
     "typescript": "^5.9.0"
   },
   "engines": {
-    "node": ">=20.9.0"
+    "node": ">=22.0.0"
   }
 }

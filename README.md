@@ -2,26 +2,27 @@
 
 **Find your professional athlete body double.** Enter your height, weight and wingspan, and MorphMatch matches you against 350 professionals across football, basketball, tennis and swimming — then draws you both to scale on the measuring wall, overlapped or side by side.
 
-Built with Next.js 16, React 19, Tailwind CSS 4, TypeScript and Supabase. Runs entirely on free tiers.
+Built with Next.js 16, React 19, Tailwind CSS 4, TypeScript and Supabase. Matching needs no backend; accounts use a separately configured Supabase project.
 
 ## Features
 
 - **Find my match** — a weighted similarity engine scores every athlete against your measurements (height, weight, wingspan and ape index), with a "Surprise me" reroll weighted toward your best matches
-- **True-scale silhouettes** — figures are generated parametrically from the real measurements at 1 SVG unit = 1 cm, so the overlay shows exactly where you differ; view as overlay, side by side, or a numbers table with signed deltas
-- **Head-to-head** — compare any two pros across sports and eras (Wembanyama vs Peter Crouch is a good time)
+- **Scaled silhouettes** — approximate body shapes generated from measurements at 1 SVG unit = 1 cm; view as overlay, side by side, or a numbers table with signed deltas and estimate markers
+- **Head-to-head** — compare any two pros across sports and eras; share the selected athletes and view through native sharing, clipboard or a selectable link
 - **Robust filters** — sport, gender, league/tour, country, and active/retired era
 - **Athlete wall** — browse, search and sort the full database, with freely licensed photos from Wikipedia (and a graceful silhouette fallback)
-- **Accounts & saved comparisons** — Supabase email/password and Google sign-in, with row-level security; the app works fully without Supabase configured, accounts just switch off
+- **Accounts & saved comparisons** — Supabase email/password, confirmation resend, password recovery and optional Google sign-in, with row-level security; saved personal comparisons restore measurements privately on your device; accounts switch off when Supabase is absent
 - **Units** — metric/imperial toggle everywhere, persisted locally
+- **Phone-friendly web experience** — touch controls, readable inputs, narrow-screen layouts, measurement reset and a shortcut to match results; no separate native mobile app is included
 
 ## Quick start (VS Code / local)
 
-Requires Node.js 20.9+ (22 recommended).
+Requires Node.js 22+ (the Supabase SDK requires Node 22).
 
 ```bash
 git clone <your-repo-url> morphmatch
 cd morphmatch
-npm install
+npm ci
 cp .env.example .env.local   # optional — only needed for accounts
 npm run dev
 ```
@@ -30,39 +31,97 @@ Open http://localhost:3000. Everything except sign-in and saved comparisons work
 
 ### Scripts
 
-| Command                           | What it does                                                           |
-| --------------------------------- | ---------------------------------------------------------------------- |
-| `npm run dev`                     | Dev server with hot reload                                             |
-| `npm run build`                   | Production build                                                       |
-| `npm run lint`                    | ESLint (Next core-web-vitals + TypeScript rules)                       |
-| `npm run typecheck`               | TypeScript, no emit                                                    |
-| `npm run format` / `format:check` | Prettier write / verify                                                |
-| `npm run smoke`                   | Data-integrity + engine sanity checks (run after editing athlete data) |
+| Command                           | What it does                                                                             |
+| --------------------------------- | ---------------------------------------------------------------------------------------- |
+| `npm run dev`                     | Dev server with hot reload                                                               |
+| `npm run build`                   | Production build                                                                         |
+| `npm run check:production`        | Validate public production origins and account settings                                  |
+| `npm run build:production`        | Validate production settings, then build (used by Vercel)                                |
+| `npm run prepare:production`      | Validate settings, quality checks and production audit, then create the final build      |
+| `npm run lint`                    | ESLint (Next core-web-vitals + TypeScript rules)                                         |
+| `npm run typecheck`               | TypeScript, no emit                                                                      |
+| `npm run format` / `format:check` | Prettier write / verify                                                                  |
+| `npm run smoke`                   | Data-integrity + engine sanity checks (run after editing athlete data)                   |
+| `npm test`                        | Data, matching, comparison, account-validation and deployment checks                     |
+| `npm run test:e2e`                | Desktop Chrome, Android Chromium, iOS WebKit and 320px browser checks; accounts disabled |
+| `npm run verify`                  | Lint, types, formatting, regression tests and production build                           |
+
+## Local database and accounts
+
+The 350-athlete dataset is already bundled in `data/`; it needs no database server or import. Supabase stores only accounts (`auth.users`) and saved comparisons (`public.saved_comps`). The saved-comparison schema has ownership policies for reading, inserting and deleting, plus an index on user and creation time.
+
+Install the [Supabase CLI](https://supabase.com/docs/guides/local-development/cli/getting-started) and start Docker, then run from this directory:
+
+```bash
+npm run db:setup
+npm run dev
+```
+
+`db:setup` starts the local Supabase stack, applies migrations to a new database, and writes its public API URL and anon key into `.env.local`, preserving unrelated variables. It replaces any existing Supabase URL/key with the local values. No hosted project is needed. The first start downloads container images and can take several minutes.
+
+- App: http://localhost:3000
+- Supabase Studio (inspect tables and users): http://127.0.0.1:55323
+- API: http://127.0.0.1:55321
+- PostgreSQL: `postgresql://postgres:postgres@127.0.0.1:55322/postgres`
+- Local email inbox: http://127.0.0.1:55324
+
+Sign up through `/login` with an email and password, then save a comparison. Email confirmation is disabled **only for local development**. Google OAuth requires separate provider credentials and is not configured locally.
+
+`npm run db:status` shows service status. `npm run db:stop` stops services while retaining database data. After adding migrations, `npm run db:reset` rebuilds the **local database and deletes its accounts and saved comparisons**; it applies all migrations. No sample users or comparisons are seeded. Restart Next.js after changing environment variables. If Docker reports permission denied, ensure your user can access the Docker daemon.
 
 ## Enabling accounts (Supabase, ~5 minutes)
 
 1. Create a free project at [supabase.com/dashboard](https://supabase.com/dashboard).
-2. In the dashboard, open **SQL Editor**, paste the contents of [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql), and run it. This creates the `saved_comps` table with row-level security (users can only ever read, insert and delete their own rows).
-3. Open **Project Settings → API** and copy the **Project URL** and the **anon / publishable key** into `.env.local`:
+2. Apply **all** SQL files in [`supabase/migrations/`](supabase/migrations/) in order. `0001` creates the table and ownership policies, `0002` grants authenticated access, `0003` validates new comparison payloads, and `0004` removes inherited table privileges that bypass ownership rules. Existing rows are preserved; malformed legacy rows are reported in the Saved view.
+3. Copy the **Project URL** and a **publishable key** into `.env.local`:
 
    ```bash
    NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
    ```
 
-4. Restart `npm run dev`. Email/password sign-up works immediately (Supabase sends confirmation emails on its built-in free SMTP).
-5. **Google sign-in (optional):** in **Authentication → Providers → Google**, add OAuth client credentials from Google Cloud Console. Add your site URL and `http://localhost:3000/auth/callback` (plus your production `/auth/callback` URL) under **Authentication → URL Configuration → Redirect URLs**.
+   `NEXT_PUBLIC_SUPABASE_ANON_KEY` remains supported as a fallback. Never put a secret or service-role key in a `NEXT_PUBLIC_*` variable.
+
+4. Set the production **Site URL** in Supabase and allow your exact `/auth/callback` URL under **Authentication → URL Configuration → Redirect URLs**. Include the local callback URLs for development. Keep email confirmation enabled for hosted accounts, and configure [custom SMTP](https://supabase.com/docs/guides/auth/auth-smtp) before opening public registration: Supabase's built-in sender is for testing and restricts recipients. Test confirmation and password-recovery emails on the production domain.
+5. **Google sign-in (optional):** configure OAuth credentials in **Authentication → Providers → Google**, then set `NEXT_PUBLIC_GOOGLE_AUTH_ENABLED=true`. The Google button is hidden by default.
+6. Restart the dev server or rebuild production after changing public environment variables.
 
 The anon key is safe to expose in the browser — that's what it's for; data access is enforced by RLS policies, not by secrecy of the key.
 
-## Deploying to Vercel (free)
+## Deploying to Vercel
 
 1. Push the repo to GitHub (below).
-2. At [vercel.com/new](https://vercel.com/new), import the repository. Vercel auto-detects Next.js — no settings to change.
-3. If you want accounts, add the two environment variables (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`) in the import screen or later under **Project → Settings → Environment Variables**, then redeploy.
-4. Add your Vercel URL (e.g. `https://morphmatch.vercel.app/auth/callback`) to Supabase's redirect URL allow-list so OAuth and email confirmations return to production.
+2. At [vercel.com/new](https://vercel.com/new), import the repository. The committed `vercel.json` selects Next.js and runs the production environment check before building.
+3. Set `SITE_URL` to your real public HTTPS origin **before building**, to populate sitemap and social metadata. Use Node.js 22 or later. Production builds reject missing or placeholder origins; previews can use Vercel's own preview URL when `SITE_URL` is absent.
+4. If you want accounts, configure the Supabase public URL/key in the hosting environment, apply all database migrations, configure SMTP and callback URLs as above, then redeploy. Leave the Supabase variables empty for a public matching-only site.
+5. Run the verification commands below, then configure the real hosted environment and run `npm run prepare:production` to create the final artifact. After deployment, test the public domain, real phone sharing, sign-up confirmation/resend, recovery, save/reopen/delete and sign-out. Local credentials are for local development only.
 
-The included GitHub Actions workflow ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs lint, typecheck, format check and a full build on every push and pull request — deliberately without Supabase env vars, proving the graceful-degrade path stays green.
+The phased implementation, verification evidence and final hosting steps are in [`docs/PRODUCTION_READINESS.md`](docs/PRODUCTION_READINESS.md). A production domain, hosted account settings and deployment remain required before a public launch.
+
+The included GitHub Actions workflow ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs lint, types, formatting, regression checks, a production build, production dependency auditing and browser tests on pushes and pull requests. Its build explicitly disables accounts to exercise that supported deployment mode.
+
+### Verification
+
+```bash
+npm ci
+npm run verify
+npx playwright install chromium webkit
+npm run test:e2e
+```
+
+Browser tests use port 3100 (override with `MORPHMATCH_E2E_PORT` when it is occupied) and mock third-party photo outages so results do not depend on Wikipedia uptime. On Linux, browser libraries can be installed with `npx playwright install --with-deps chromium webkit`. The device projects emulate mobile browsers; they do not certify physical phones or native app packages. For local account integration checks, start Supabase and run `npm run test:accounts`; the script uses disposable users, verifies ownership isolation and cleans them up without resetting the database. Hosted OAuth and email delivery still require verification with your production configuration.
+
+With `.env.local` configured for the running local Supabase stack, verify the complete account and recovery UI with:
+
+```bash
+MORPHMATCH_ACCOUNTS_E2E=1 npm run test:e2e -- tests/accounts.spec.ts --workers=1
+```
+
+This uses disposable local accounts and the local email inbox, including changing a password through a recovery email. It does not reset the database. Rebuild before switching between tests that enable or disable accounts; `PLAYWRIGHT_SKIP_BUILD=1` is only for an already matching build.
+
+The full development dependency audit currently reports an unresolved [`braces` denial-of-service advisory](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm) through Next.js's ESLint tooling. No fixed upstream `braces` release is available in this chain as of 11 October 2026. Production dependencies pass `npm audit --omit=dev`; do not use `npm audit fix --force` to downgrade Next.js tooling. Review dependency alerts as upstream fixes become available.
+
+ESLint 9 has also [reached end of life](https://eslint.org/version-support/). The current Next.js configuration bundles React and accessibility plugins whose peer dependencies do not support ESLint 10 yet. The compatible lint setup is retained and verified; upgrade it when those plugins support the current ESLint release.
 
 ### Pushing to GitHub
 
@@ -97,14 +156,14 @@ The database is plain TypeScript in [`data/`](data/) — one file per sport, no 
 
 ## Data honesty
 
-Heights and weights are official listed figures from leagues, clubs and federations. Listed figures vary between sources and across careers — treat them as the athlete's "card stats", not lab measurements. Wingspans are only real where published (mostly NBA combine data and a few famous cases like Michael Phelps); everything badged **≈** is an estimate. League assignments reflect the 2025/26 season for active players; legends carry the league they're most associated with.
+The supplied dataset is a reference snapshot, with league assignments based on the original 2025/26 season and legends assigned their best-known league. Career status and league labels are not live. Individual records currently lack source citations, so the review verifies structure and plausibility rather than independently certifying all 350 measurements. Treat the listed figures as card stats, not lab measurements. Everything badged **≈** is an estimate, including the user's height-based wingspan when omitted. Silhouettes approximate proportions, and scores do not predict athletic performance or appearance.
 
 ## Architecture notes
 
-- **Static dataset, dynamic accounts.** Athletes ship in the bundle (fast, free, versioned in git, works offline); Supabase holds only user data. No API routes are needed for matching — it runs client-side in microseconds.
+- **Static dataset, dynamic accounts.** Athletes ship in the bundle; Supabase holds account and saved-comparison data. Matching runs client-side and needs no API call after the app loads. There is no offline service worker.
 - **Graceful degrade.** Every Supabase touchpoint checks `isSupabaseConfigured`; with no env vars the save/sign-in UI explains itself instead of erroring.
 - **Next.js 16 `proxy.ts`** (the successor to `middleware.ts`) keeps Supabase sessions refreshed.
-- **Photos** come from Wikipedia's REST summary endpoint at render time and are cached per session; nothing is scraped or stored.
+- **Photos** load lazily from Wikipedia and Wikimedia Commons with source, author and licence credits; requests are deduplicated, and failed or unsupported images fall back to silhouettes.
 
 ## License
 

@@ -23,8 +23,8 @@ export default function HomePage() {
             </h1>
             <p className="mt-5 max-w-md text-lg leading-relaxed text-ink-soft">
               Stand against the measuring wall. Enter your height, weight and wingspan, and
-              MorphMatch finds the professional athletes who share your exact build — drawn to
-              scale, side by side or overlapped.
+              MorphMatch finds the professional athletes with similar measurements — drawn to scale,
+              side by side or overlapped.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
               <Link
@@ -61,7 +61,7 @@ export default function HomePage() {
           />
           <Step
             title="See it to scale"
-            body="Silhouettes are generated from the real measurements — 1 pixel-unit per centimetre — so the overlay shows exactly where you differ."
+            body="Silhouettes use one SVG unit per centimetre to compare height and approximate proportions. The numbers show the measured differences."
           />
         </div>
       </section>

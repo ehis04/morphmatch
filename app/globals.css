@@ -10,28 +10,31 @@
   --color-card: #fdfefb;
   --color-ink: #131c2b;
   --color-ink-soft: #4c5870;
-  --color-ink-faint: #8b95a9;
+  --color-ink-faint: #667085;
   --color-line: #d9e0e9;
   --color-line-strong: #b9c3d2;
   --color-tape: #f5b800;
   --color-tape-deep: #d9a300;
-  --color-record: #e4382b;
+  --color-record: #ba2a20;
 
   --color-pitch: #1f7a46;
-  --color-court: #e8722a;
-  --color-clay: #7e9c22;
-  --color-pool: #1c86c8;
-
-  --font-display: "Bricolage Grotesque", "Arial Black", sans-serif;
-  --font-sans: "Instrument Sans", system-ui, sans-serif;
-  --font-mono: "Spline Sans Mono", ui-monospace, monospace;
+  --color-court: #a94612;
+  --color-clay: #52670d;
+  --color-pool: #116594;
 
   --shadow-card: 0 1px 2px rgb(19 28 43 / 0.06), 0 8px 24px -12px rgb(19 28 43 / 0.18);
   --shadow-lift: 0 2px 4px rgb(19 28 43 / 0.08), 0 16px 40px -16px rgb(19 28 43 / 0.28);
 }
 
+@theme inline {
+  --font-display: var(--font-bricolage), "Arial Black", sans-serif;
+  --font-sans: var(--font-instrument), system-ui, sans-serif;
+  --font-mono: var(--font-spline), ui-monospace, monospace;
+}
+
 :root {
   color-scheme: light;
+  scroll-padding-top: 5rem;
 }
 
 body {
@@ -73,6 +76,21 @@ input[type="number"]::-webkit-inner-spin-button {
 input[type="number"] {
   -moz-appearance: textfield;
   appearance: textfield;
+}
+
+/* Comfortable phone controls without disabling pinch zoom. */
+@media (pointer: coarse) {
+  button,
+  input:not([type="range"]),
+  select,
+  textarea {
+    min-height: 44px;
+  }
+  input:not([type="range"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
 }
 
 /* Range slider (hero + forms) styled as a measuring tape */

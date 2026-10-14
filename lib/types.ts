@@ -69,7 +69,8 @@ export interface MatchResult {
 
 /** A comparison subject: either the user's custom stats or a pro athlete. */
 export type Subject =
-  { kind: "custom"; label: string; stats: BodyStats } | { kind: "athlete"; athleteId: string };
+  | { kind: "custom"; label: string; stats: BodyStats; wingspanEstimated?: boolean }
+  | { kind: "athlete"; athleteId: string };
 
 export interface SavedComp {
   id: string;

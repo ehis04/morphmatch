@@ -38,7 +38,7 @@ export function ComparisonStage({ subjects, mode, system, className }: Compariso
     let slots: { cx: number }[];
     let contentW: number;
     if (mode === "overlay") {
-      const w = 2 * Math.max(...figures.map((f) => f.halfWidth)) + 30;
+      const w = 2 * Math.max(35, ...figures.map((f) => f.halfWidth)) + 30;
       contentW = w;
       slots = figures.map(() => ({ cx: RAIL + w / 2 }));
     } else {
@@ -161,14 +161,14 @@ export function ComparisonStage({ subjects, mode, system, className }: Compariso
               />
               <text
                 x={atStart ? innerL + 3 : innerR - 3}
-                y={y - 2.5}
+                y={y - (atStart ? 2.5 : 10)}
                 textAnchor={atStart ? "start" : "end"}
                 fontSize={6.4}
                 fontWeight={700}
                 fill={s.color}
                 fontFamily="var(--font-mono)"
               >
-                {s.label} · {formatHeight(s.stats.heightCm, system)}
+                {formatHeight(s.stats.heightCm, system)}
               </text>
             </g>
           );
@@ -198,23 +198,29 @@ export function ComparisonStage({ subjects, mode, system, className }: Compariso
       </svg>
 
       {/* legend */}
-      <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2">
+      <dl className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
         {subjects.map((s, i) => (
-          <div key={s.label + i} className="flex items-center gap-2 text-sm">
-            <span
-              aria-hidden
-              className="inline-block h-3 w-3 rounded-sm"
-              style={{ backgroundColor: s.color }}
-            />
-            <span className="font-semibold">{s.label}</span>
-            <span className="font-mono text-ink-soft">
+          <div key={s.label + i} className="min-w-0 text-sm">
+            <dt className="flex items-start gap-2 font-semibold">
+              <span
+                aria-hidden
+                className="mt-1 inline-block h-3 w-3 shrink-0 rounded-sm"
+                style={{ backgroundColor: s.color }}
+              />
+              <span className="min-w-0 break-words">{s.label}</span>
+            </dt>
+            <dd className="ml-5 mt-0.5 font-mono text-xs leading-relaxed text-ink-soft sm:text-sm">
               {formatHeight(s.stats.heightCm, system)} · {formatWeight(s.stats.weightKg, system)} ·{" "}
               {s.wingspanEstimated ? "≈" : ""}
               {formatHeight(s.stats.wingspanCm, system)} span
-            </span>
+            </dd>
           </div>
         ))}
-      </div>
+      </dl>
+      <p className="mt-2 text-xs text-ink-soft">
+        Illustrative body proportions derived from measurements; individual body shape varies.
+        {subjects.some((subject) => subject.wingspanEstimated) && " ≈ marks an estimated wingspan."}
+      </p>
     </div>
   );
 }

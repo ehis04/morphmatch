@@ -1,38 +1,69 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {
+  createContext,
+  createElement,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import type { BodyStats } from "./types";
+import {
+  DEFAULT_PROFILE,
+  parseStoredProfile,
+  validateProfile,
+  type Profile,
+} from "./profile-validation";
 
-export interface Profile extends Omit<BodyStats, "wingspanCm"> {
-  /** Undefined when the user hasn't entered one. */
-  wingspanCm?: number;
+export { DEFAULT_PROFILE, type Profile } from "./profile-validation";
+
+interface ProfileContextValue {
+  profile: Profile;
+  setProfile: (profile: Profile) => void;
+  hydrated: boolean;
 }
 
-export const DEFAULT_PROFILE: Profile = { heightCm: 178, weightKg: 75, gender: "m" };
+const ProfileContext = createContext<ProfileContextValue | null>(null);
 
-/** The user's own stats, persisted locally so they survive reloads. */
-export function useProfile() {
+/** One shared profile lets saved comparisons restore measurements before navigation. */
+export function ProfileProvider({ children }: { children: ReactNode }) {
   const [profile, setProfileState] = useState<Profile>(DEFAULT_PROFILE);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
     try {
-      const raw = window.localStorage.getItem("mm.profile");
       // One-time hydration from localStorage after mount (avoids SSR mismatch).
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (raw) setProfileState({ ...DEFAULT_PROFILE, ...JSON.parse(raw) });
+      setProfileState(parseStoredProfile(window.localStorage.getItem("mm.profile")));
     } catch {
       // corrupted storage — fall back to defaults
     }
     setHydrated(true);
   }, []);
 
-  const setProfile = (p: Profile) => {
+  const setProfile = useCallback((p: Profile) => {
     setProfileState(p);
-    window.localStorage.setItem("mm.profile", JSON.stringify(p));
-  };
+    // Preserve the last complete profile while a measurement is being edited.
+    if (validateProfile(p) !== null) return;
+    try {
+      window.localStorage.setItem("mm.profile", JSON.stringify(p));
+    } catch {
+      // Private browsing, browser policy or a full quota must not break the form.
+    }
+  }, []);
 
-  return { profile, setProfile, hydrated };
+  const value = useMemo(() => ({ profile, setProfile, hydrated }), [profile, setProfile, hydrated]);
+  return createElement(ProfileContext.Provider, { value }, children);
+}
+
+/** The user's own stats, persisted locally so they survive reloads. */
+export function useProfile(): ProfileContextValue {
+  const value = useContext(ProfileContext);
+  if (!value) throw new Error("useProfile must be used inside ProfileProvider");
+  return value;
 }
 
 /** Canonical BodyStats with the wingspan default applied. */

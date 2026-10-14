@@ -27,24 +27,35 @@ function component(diff: number, range: number): number {
 }
 
 export function scoreAthlete(user: BodyStats, athlete: Athlete, hasWingspan: boolean): MatchResult {
+  if (!validStats(user) || !validStats(athlete)) {
+    throw new RangeError("Cannot compare invalid measurements");
+  }
+  const differences: StatDelta = {
+    height: athlete.heightCm - user.heightCm,
+    weight: athlete.weightKg - user.weightKg,
+    wingspan: athlete.wingspanCm - user.wingspanCm,
+    apeIndex: athlete.wingspanCm - athlete.heightCm - (user.wingspanCm - user.heightCm),
+  };
   const delta: StatDelta = {
-    height: round1(athlete.heightCm - user.heightCm),
-    weight: round1(athlete.weightKg - user.weightKg),
-    wingspan: round1(athlete.wingspanCm - user.wingspanCm),
-    apeIndex: round1(athlete.wingspanCm - athlete.heightCm - (user.wingspanCm - user.heightCm)),
+    height: round1(differences.height),
+    weight: round1(differences.weight),
+    wingspan: round1(differences.wingspan),
+    apeIndex: round1(differences.apeIndex),
   };
 
   let score: number;
   if (hasWingspan) {
     score =
-      WEIGHTS.height * component(delta.height, RANGES.height) +
-      WEIGHTS.weight * component(delta.weight, RANGES.weight) +
-      WEIGHTS.wingspan * component(delta.wingspan, RANGES.wingspan) +
-      WEIGHTS.ape * component(delta.apeIndex, RANGES.ape);
+      WEIGHTS.height * component(differences.height, RANGES.height) +
+      WEIGHTS.weight * component(differences.weight, RANGES.weight) +
+      WEIGHTS.wingspan * component(differences.wingspan, RANGES.wingspan) +
+      WEIGHTS.ape * component(differences.apeIndex, RANGES.ape);
   } else {
     const h = WEIGHTS.height / (WEIGHTS.height + WEIGHTS.weight);
     const w = WEIGHTS.weight / (WEIGHTS.height + WEIGHTS.weight);
-    score = h * component(delta.height, RANGES.height) + w * component(delta.weight, RANGES.weight);
+    score =
+      h * component(differences.height, RANGES.height) +
+      w * component(differences.weight, RANGES.weight);
   }
 
   return { athlete, score: Math.round(score * 1000) / 10, delta };
@@ -74,10 +85,25 @@ export function findMatches(
   filters: MatchFilters,
   opts: FindMatchesOptions
 ): MatchResult[] {
+  if (!validStats(user)) return [];
   const pool = applyFilters(athletes, filters);
   const results = pool.map((a) => scoreAthlete(user, a, opts.userProvidedWingspan));
   results.sort((a, b) => b.score - a.score || a.athlete.name.localeCompare(b.athlete.name));
-  return opts.limit ? results.slice(0, opts.limit) : results;
+  return opts.limit == null ? results : results.slice(0, Math.max(0, Math.floor(opts.limit)));
+}
+
+/** Selections and links must never bypass the current matching filters. */
+export function selectMatchTarget(
+  results: MatchResult[],
+  selectedId: string | null,
+  pinnedId: string | null
+): MatchResult | null {
+  return (
+    results.find((result) => result.athlete.id === selectedId) ??
+    results.find((result) => result.athlete.id === pinnedId) ??
+    results[0] ??
+    null
+  );
 }
 
 /**
@@ -87,7 +113,7 @@ export function findMatches(
 export function surpriseMatch(results: MatchResult[], excludeId?: string): MatchResult | null {
   const pool = results.filter((r) => r.athlete.id !== excludeId).slice(0, 12);
   if (pool.length === 0) return null;
-  // Quadratic falloff: rank 0 is ~12x more likely than rank 11.
+  // Quadratic falloff: in a pool of 12, rank 0 is 144x as likely as rank 11.
   const weights = pool.map((_, i) => (pool.length - i) ** 2);
   const total = weights.reduce((s, w) => s + w, 0);
   let roll = Math.random() * total;
@@ -115,4 +141,15 @@ export function defaultWingspan(heightCm: number): number {
 
 function round1(n: number): number {
   return Math.round(n * 10) / 10;
+}
+
+function validStats(stats: BodyStats): boolean {
+  return (
+    Number.isFinite(stats.heightCm) &&
+    stats.heightCm > 0 &&
+    Number.isFinite(stats.weightKg) &&
+    stats.weightKg > 0 &&
+    Number.isFinite(stats.wingspanCm) &&
+    stats.wingspanCm > 0
+  );
 }

@@ -129,7 +129,7 @@ export function buildFigure(stats: BodyStats): FigureGeometry {
     });
     prims.push({ type: "line", x1: n(kx), y1: n(kneeY), x2: n(ax), y2: n(ankleY), w: n(shinW) });
     // foot pointing outward
-    const footY = -(H * 0.024);
+    const footY = -(H * 0.021);
     prims.push({
       type: "line",
       x1: n(ax),
@@ -140,8 +140,19 @@ export function buildFigure(stats: BodyStats): FigureGeometry {
     });
   }
 
-  const reachHalf = jointX + Math.sin(A1) * upperLen + Math.sin(A2) * foreLen;
-  const halfWidth = Math.max(reachHalf, ankleX + H * 0.052 + H * 0.021) + 2;
+  // Include rounded stroke caps in the layout bounds. Without them the
+  // longest arms could be clipped by a side-by-side figure's slot.
+  const halfWidth =
+    Math.max(
+      sh * chest,
+      ...prims.map((primitive) => {
+        if (primitive.type === "line") {
+          return Math.max(Math.abs(primitive.x1), Math.abs(primitive.x2)) + primitive.w / 2;
+        }
+        if (primitive.type === "ellipse") return Math.abs(primitive.cx) + primitive.rx;
+        return 0;
+      })
+    ) + 2;
 
   return { primitives: prims, halfWidth: n(halfWidth), heightCm: H };
 }

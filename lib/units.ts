@@ -15,15 +15,26 @@ export function cmToFeetInches(cm: number): { feet: number; inches: number } {
 }
 
 export function feetInchesToCm(feet: number, inches: number): number {
-  return Math.round((feet * 12 + inches) * CM_PER_INCH * 10) / 10;
+  return (feet * 12 + inches) * CM_PER_INCH;
+}
+
+/** Incomplete or invalid drafts must not leave an old valid comparison visible. */
+export function parseImperialLength(feet: string, inches: string): number {
+  if (feet.trim() === "" || inches.trim() === "") return Number.NaN;
+  const f = Number(feet);
+  const i = Number(inches);
+  if (!Number.isInteger(f) || f < 0 || !Number.isFinite(i) || i < 0 || i >= 12) {
+    return Number.NaN;
+  }
+  return feetInchesToCm(f, i);
 }
 
 export function kgToLbs(kg: number): number {
-  return Math.round(kg / KG_PER_LB);
+  return Math.round((kg / KG_PER_LB) * 10) / 10;
 }
 
 export function lbsToKg(lbs: number): number {
-  return Math.round(lbs * KG_PER_LB * 10) / 10;
+  return lbs * KG_PER_LB;
 }
 
 /** "185 cm" or "6′1″" */
@@ -36,7 +47,7 @@ export function formatHeight(cm: number, system: UnitSystem): string {
 /** "82 kg" or "181 lb" */
 export function formatWeight(kg: number, system: UnitSystem): string {
   if (system === "metric") return `${Math.round(kg)} kg`;
-  return `${kgToLbs(kg)} lb`;
+  return `${Math.round(kg / KG_PER_LB)} lb`;
 }
 
 /** Length delta such as "+4 cm" / "−1.5 in" */
