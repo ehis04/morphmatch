@@ -85,6 +85,9 @@ Sign up through `/login` with an email and password, then save a comparison. Ema
    `NEXT_PUBLIC_SUPABASE_ANON_KEY` remains supported as a fallback. Never put a secret or service-role key in a `NEXT_PUBLIC_*` variable.
 
 4. Set the production **Site URL** in Supabase and allow your exact `/auth/callback` URL under **Authentication → URL Configuration → Redirect URLs**. Include the local callback URLs for development. Keep email confirmation enabled for hosted accounts, and configure [custom SMTP](https://supabase.com/docs/guides/auth/auth-smtp) before opening public registration: Supabase's built-in sender is for testing and restricts recipients. Test confirmation and password-recovery emails on the production domain.
+
+   For a separate preview host, allow its exact callback and its query parameters, for example `https://your-preview.vercel.app/auth/callback\?**`. Supabase matches the full preview redirect, including the `next` and per-flow query parameters. Without that query pattern, email links can fall back to the production Site URL. Keep the hostname and callback path restricted.
+
 5. **Google sign-in (optional):** configure OAuth credentials in **Authentication → Providers → Google**, then set `NEXT_PUBLIC_GOOGLE_AUTH_ENABLED=true`. The Google button is hidden by default.
 6. Restart the dev server or rebuild production after changing public environment variables.
 
