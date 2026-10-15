@@ -4,7 +4,7 @@
 
 Built with Next.js 16, React 19, Tailwind CSS 4, TypeScript and Supabase. Matching needs no backend; accounts use a separately configured Supabase project.
 
-**Live:** [morphmatch.vercel.app](https://morphmatch.vercel.app). Matching, browsing, comparisons and sharing are available. Hosted accounts are tested on a protected preview and await verified email delivery before public activation. See the [launch record](docs/LAUNCH.md) for current services, verification and remaining setup.
+**Live:** [morphmatch.vercel.app](https://morphmatch.vercel.app). Matching, browsing, comparisons and sharing are available. The account release is staged with production settings; public activation awaits resolution of the iCloud sender's storage limit. See the [launch record](docs/LAUNCH.md) for current services, verification and remaining setup.
 
 ## Features
 

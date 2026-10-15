@@ -1,22 +1,25 @@
 # Launch record — 14 October 2026
 
-The public matching, athlete browsing, comparison and sharing experience is live at **https://morphmatch.vercel.app**. Public accounts are deliberately disabled until production email delivery is verified. The account experience is deployed and tested on a protected preview.
+The public matching, athlete browsing, comparison and sharing experience is live at **https://morphmatch.vercel.app**. The account release is staged behind Vercel authentication with production settings. Public signup remains closed while the iCloud sender's reported full-storage condition is resolved.
 
-**SMTP update — 15 October 2026:** the owner replaced Yahoo with iCloud SMTP and authorized messages to the configured iCloud address. Signup, confirmation resend and password-recovery requests succeeded. All eight hosted email/account checks passed, including actual sent-token callbacks, confirmation enforcement, password changes and save/view/delete/sign-out. Independent cleanup verification found zero users and saved comparisons. Inbox arrival still needs owner confirmation before public accounts are activated; signup is closed while that confirmation is pending.
+**SMTP update — 15 October 2026:** the owner replaced Yahoo with iCloud SMTP and authorized messages to the configured iCloud address. Signup, confirmation resend and password-recovery requests succeeded. All eight hosted email/account checks passed, including actual sent-token callbacks, confirmation enforcement, password changes and save/view/delete/sign-out. Independent cleanup verification found zero users and saved comparisons. The owner cannot check receipt because iCloud storage is full and explicitly waived inbox confirmation. That waiver is recorded; inbox delivery remains unverified. Apple documents that full iCloud storage also prevents outgoing mail, so sender capacity remains an operational blocker to reliable public signup and recovery. [Apple's storage guidance](https://support.apple.com/en-gb/102198).
 
 ## Services and configuration
 
-| Component       | Current state                                                                                                                                                          |
-| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Source          | [ehis04/morphmatch](https://github.com/ehis04/morphmatch), branch `main`, connected to Vercel Git deployments.                                                         |
-| Public hosting  | [Vercel project](https://vercel.com/ehis-oghina-s-projects/morphmatch), Hobby plan, HTTPS, Node.js 22.x, functions in Ireland (`dub1`).                                |
-| Account preview | [Protected deployment](https://morphmatch-keeujxbh0-ehis-oghina-s-projects.vercel.app), with hosted accounts enabled. Vercel protection remains enabled.               |
-| Database        | [Supabase project](https://supabase.com/dashboard/project/ccatnexlnlnvinjkkldy), Free plan, Ireland (`eu-west-1`), healthy at provisioning.                            |
-| Schema          | Migrations `0001`–`0004` applied, with migration history preserved. Ownership policies, payload constraints and least privileges verified against the hosted database. |
-| Authentication  | Canonical Site URL, exact public/preview callbacks and a restricted preview callback query pattern configured; confirmation required, Google off, signup disabled.     |
-| Email           | iCloud SMTP on port 587. Three test messages accepted and hosted email/account checks passed; inbox arrival confirmation pending.                                      |
+| Component       | Current state                                                                                                                                                           |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Source          | [ehis04/morphmatch](https://github.com/ehis04/morphmatch), branch `main`, connected to Vercel Git deployments.                                                          |
+| Public hosting  | [Vercel project](https://vercel.com/ehis-oghina-s-projects/morphmatch), Hobby plan, HTTPS, Node.js 22.x, functions in Ireland (`dub1`).                                 |
+| Account preview | [Protected deployment](https://morphmatch-keeujxbh0-ehis-oghina-s-projects.vercel.app), with hosted accounts enabled. Vercel protection remains enabled.                |
+| Account release | [Staged production candidate](https://morphmatch-e59d82nvc-ehis-oghina-s-projects.vercel.app), Node.js 22.x, Ireland, protected by Vercel authentication; not promoted. |
+| Database        | [Supabase project](https://supabase.com/dashboard/project/ccatnexlnlnvinjkkldy), Free plan, Ireland (`eu-west-1`), healthy at provisioning.                             |
+| Schema          | Migrations `0001`–`0004` applied, with migration history preserved. Ownership policies, payload constraints and least privileges verified against the hosted database.  |
+| Authentication  | Canonical Site URL, exact public/preview callbacks and a restricted preview callback query pattern configured; confirmation required, Google off, signup disabled.      |
+| Email           | iCloud SMTP on port 587. Three Auth/SMTP handoffs accepted; inbox delivery unverified and its check waived. Owner reports full storage affecting the sender.            |
 
 Production uses `SITE_URL=https://morphmatch.vercel.app` and Google disabled. Its Supabase public URL/key are omitted to keep the account UI closed. Preview has the hosted public URL/key and derives its own origin from Vercel. No database password, service-role key or management token is required in the application environment.
+
+Candidate `dpl_Ct5T8RmpTKQFr48ydiDSzJwEqQC9` was built from `e1a0562` using deployment-specific build/runtime overrides for the hosted public URL/key, canonical `SITE_URL` and disabled Google. The command used `--prod --skip-domain`, so it did not change global Production variables or move the public domain. Anonymous requests to the candidate require Vercel authentication. The canonical domain retained deployment `dpl_DR8Gf6tpdDVPShioYD2DTupz62qN` when the candidate was staged.
 
 Provisioning credentials and temporary verification artifacts are retained only in ignored `.vercel/` files with restricted permissions. `.env.local` retains the local Supabase settings. Never commit or upload these private files. The deployment upload manifest was checked and excluded local environment/provisioning files.
 
@@ -32,6 +35,7 @@ Provisioning credentials and temporary verification artifacts are retained only 
 - The initial Yahoo signup test reproduced SMTP 535 temporary authentication blocking. The owner switched to iCloud. Three real email requests then succeeded, and eight protected-preview checks passed: confirmation required before login, resend, actual emailed-token PKCE callbacks, normal sign-in/save/view/delete/sign-out, recovery, password update and signing in with the recovered password. Inbox arrival is not inferred from API success.
 - The email checker's immediate cleanup confirmation encountered a transport failure after deleting its test account. A separate scoped database query verified zero test users/saves and zero total users/saves. No extra email test was needed. Signup was closed again; Production still has no Supabase URL/key.
 - The accounts-enabled production configuration passed validation against the actual canonical origin and hosted public key on Node.js 22. This validates the intended settings without changing the public deployment.
+- The staged production candidate passed its guarded cloud build and all six desktop/Android account checks: Numbers save/reopen, account isolation/deletion retry and custom-profile restoration with blocked storage. These use the candidate's actual production build/runtime settings. Its two confirmed disposable users were removed; independent scoped and total counts found zero users and saved comparisons. No messages were sent by these checks. Candidate protection and the unchanged canonical deployment were verified again after testing.
 
 The deployment build runs `npm run build:production`: environment validation, lint, types, regressions, production dependency audit and optimized build. GitHub Actions additionally checks source formatting and runs browser checks. Local `prepare:production` checks formatting before the guarded build. Vercel rewrites `vercel.json` before cloud builds, so formatting validation runs against the original source in CI rather than that generated file. These are separate services; the current setup does not make Vercel wait for GitHub's browser job.
 
@@ -41,9 +45,9 @@ The function region is pinned to `dub1` in `vercel.json` so automatic Git deploy
 
 ## Remaining account launch steps
 
-1. Confirm that the two confirmation messages and one password-reset message arrived in the configured iCloud inbox or spam folder. Keep their links private; the automated test already consumed them.
-2. Once arrival is confirmed, enable public signup and add the hosted Supabase URL/public publishable key to Vercel's Production environment. Keep the unused anon alias absent and Google disabled unless its provider has been configured.
-3. Rebuild for Production using the canonical `SITE_URL`, then verify the real public account journey and the prepared desktop/Android account checks. Do not promote the preview artifact unchanged: its origin and public settings were fixed for the preview during its build.
+1. Restore capacity in the iCloud account used as sender, or configure an SMTP provider with capacity. The owner waived the inbox-receipt check; no additional inbox confirmation is required merely to proceed. The known sender storage condition still needs resolution. Do not delete personal iCloud content or buy storage through application automation.
+2. Verify the current SMTP configuration, enable public signup and add the hosted Supabase URL/public publishable key to global Vercel Production variables so future Git deployments retain accounts. Keep the unused anon alias absent and Google disabled unless its provider has been configured.
+3. Promote the verified production candidate, then verify the canonical public account and email callbacks and inspect runtime logs. This candidate already has the canonical `SITE_URL`; the earlier preview artifact must not be promoted unchanged because its origin was fixed to the preview during its build.
 4. Native sharing and email-app handoff should also be checked on a physical phone. No native app package is included in this repository.
 
 iCloud uses an [app-specific password and authenticated SMTP](https://support.apple.com/en-us/102525). A dedicated transactional provider is recommended as public usage grows; no email-provider subscription has been purchased.

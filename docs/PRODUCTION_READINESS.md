@@ -1,6 +1,6 @@
 # Production readiness — 12 October 2026
 
-**Deployment update — 14 October 2026:** the public matching/comparison site is deployed at [morphmatch.vercel.app](https://morphmatch.vercel.app). A hosted Supabase database and protected account preview are configured; public accounts await verified SMTP. Current deployment details are in [the launch record](LAUNCH.md).
+**Deployment update — 15 October 2026:** the public matching/comparison site is deployed at [morphmatch.vercel.app](https://morphmatch.vercel.app). The account release is staged with production settings; eight hosted iCloud email/account checks and six staged desktop/Android account checks passed. Public activation awaits resolution of the sender's full iCloud storage. The owner waived inbox confirmation; receipt remains unverified. Current details are in [the launch record](LAUNCH.md).
 
 MorphMatch is a responsive Next.js website. This repository has no separate native iOS or Android application, mobile store package or offline service worker. The same web deployment serves desktop and mobile browsers.
 
@@ -78,4 +78,4 @@ This checks production settings, lint, types, formatting, regressions and the pr
 3. If using accounts, verify real email confirmation/resend/recovery, save/reopen/delete, sign-out and Google if enabled. Use a separate test account; avoid testing with existing customer data.
 4. Check hosting errors after the first real sessions. Retain the previous deployment for rollback; the new migrations preserve existing rows.
 
-The public website and hosted database have since been deployed; see [the launch record](LAUNCH.md). Verified SMTP and real email-flow checks remain before public accounts can be activated. The repository contains no native mobile package. Dataset sourcing and upstream lint-tooling limitations remain documented in [the original review](REVIEW.md).
+The public website and hosted database have since been deployed; see [the launch record](LAUNCH.md). Hosted email/account checks pass and a production account release is staged; the sender's full iCloud storage remains to be resolved before reliable public activation. The repository contains no native mobile package. Dataset sourcing and upstream lint-tooling limitations remain documented in [the original review](REVIEW.md).

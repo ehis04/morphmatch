@@ -1,6 +1,6 @@
 **MorphMatch publication review — 11 October 2026**
 
-**Deployment update — 14 October 2026:** the public website is live at [morphmatch.vercel.app](https://morphmatch.vercel.app). Hosted accounts await verified email delivery. Current deployment and verification details are in [the launch record](LAUNCH.md).
+**Deployment update — 15 October 2026:** the public website is live at [morphmatch.vercel.app](https://morphmatch.vercel.app). The account release is staged with production settings after eight hosted email/account checks and six staged desktop/Android account checks passed. Public activation awaits resolution of the iCloud sender's storage limit; the owner waived inbox confirmation. Current deployment and verification details are in [the launch record](LAUNCH.md).
 
 The follow-up finishing phases and expanded mobile verification are recorded in [Production readiness — 12 October 2026](PRODUCTION_READINESS.md). The findings and test counts below describe the original review.
 
