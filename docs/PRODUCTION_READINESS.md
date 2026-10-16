@@ -1,6 +1,6 @@
 # Production readiness — 12 October 2026
 
-**Deployment update — 15 October 2026:** the public matching/comparison site is deployed at [morphmatch.vercel.app](https://morphmatch.vercel.app). The account release is staged with production settings; eight hosted iCloud email/account checks and six staged desktop/Android account checks passed. Public activation awaits resolution of the sender's full iCloud storage. The owner waived inbox confirmation; receipt remains unverified. Current details are in [the launch record](LAUNCH.md).
+**Deployment update — 16 October 2026:** matching, comparisons, accounts and saved comparisons are live at [morphmatch.vercel.app](https://morphmatch.vercel.app). Signup is enabled, confirmation is required and Gmail SMTP has replaced the capacity-limited iCloud sender. All six canonical desktop/Android account checks and eight canonical email/account checks passed, with test users and saves removed. Eight Gmail email/account checks also passed on the protected preview on 15 October. Inbox receipt remains unverified and was explicitly waived by the owner. Current details are in [the launch record](LAUNCH.md).
 
 MorphMatch is a responsive Next.js website. This repository has no separate native iOS or Android application, mobile store package or offline service worker. The same web deployment serves desktop and mobile browsers.
 
@@ -13,7 +13,7 @@ The complete journey is measurements → local matching and comparison → optio
 | 1. Experience review      | Audit public, account and saved journeys; confirm mobile scope and narrow-screen gaps.                                                                                               | Complete                                                   |
 | 2. Finish the experience  | Sharing with native/clipboard/manual fallbacks; reset and field errors; saved measurement reopening; confirmation resend and password-change entry; phone controls and layout fixes. | Complete                                                   |
 | 3. Release verification   | Regressions, database integration, production builds and desktop/Android/iOS/320px browser checks, including recovery and storage failures.                                          | Complete                                                   |
-| 4. Production preparation | Environment validation, Vercel configuration, CI, social preview and Apple icon, release command and live-launch checklist.                                                          | Public site live; account activation awaits verified email |
+| 4. Production preparation | Environment validation, Vercel configuration, CI, social preview and Apple icon, release command and live-launch checklist.                                                          | Complete; live canonical accounts and email flows verified |
 
 ## Completed changes and evidence
 
@@ -61,9 +61,9 @@ npm run test:accounts
 MORPHMATCH_ACCOUNTS_E2E=1 npm run test:e2e -- tests/accounts.spec.ts --workers=1
 ```
 
-The last two commands require the existing local Supabase stack and local public settings. They use disposable users and remove them without resetting the database. Linux browser verification may require `npx playwright install --with-deps chromium webkit` once. If port 3100 is already occupied, set `MORPHMATCH_E2E_PORT` to an unused port. This review used port 3105 and one worker for serial reruns and account checks. Browser projects cover desktop Chrome, Android Chromium, iOS WebKit and compact 320px screens; device emulation is not a physical-device certification. Native share-sheet behavior and email apps still need a brief check on a real phone after deployment.
+The last two commands require the existing local Supabase stack and local public settings. They use disposable users and remove them without resetting the database. Linux browser verification may require `npx playwright install --with-deps chromium webkit` once. If port 3100 is already occupied, set `MORPHMATCH_E2E_PORT` to an unused port. This review used port 3105 and one worker for serial reruns and account checks. Browser projects cover desktop Chrome, Android Chromium, iOS WebKit and compact 320px screens; device emulation is not a physical-device certification. Native share-sheet behavior and email-app handoff remain unverified on physical phones; a brief manual phone check is optional.
 
-The release command was exercised using a fixture origin for build validation, with accounts disabled; that fixture was not deployed or written into `.env.local`. The local build artifact is a validation build. After configuring the real production environment, create the actual release artifact:
+On 12 October, the release command was exercised using a fixture origin for build validation, with accounts disabled; that fixture was not deployed or written into `.env.local`. That local build artifact was a validation build. For subsequent releases, configure the intended production environment before creating the release artifact:
 
 ```bash
 npm run prepare:production
@@ -78,4 +78,4 @@ This checks production settings, lint, types, formatting, regressions and the pr
 3. If using accounts, verify real email confirmation/resend/recovery, save/reopen/delete, sign-out and Google if enabled. Use a separate test account; avoid testing with existing customer data.
 4. Check hosting errors after the first real sessions. Retain the previous deployment for rollback; the new migrations preserve existing rows.
 
-The public website and hosted database have since been deployed; see [the launch record](LAUNCH.md). Hosted email/account checks pass and a production account release is staged; the sender's full iCloud storage remains to be resolved before reliable public activation. The repository contains no native mobile package. Dataset sourcing and upstream lint-tooling limitations remain documented in [the original review](REVIEW.md).
+The public website and hosted database are deployed with accounts enabled and Gmail SMTP; see [the launch record](LAUNCH.md) for current verification and operational limits. The former iCloud capacity blocker was resolved by replacing that sender. Inbox receipt remains unverified under the owner's waiver. The repository contains no native mobile package. Dataset sourcing and the dated lint-tooling findings remain documented in [the original review](REVIEW.md).

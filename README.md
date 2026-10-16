@@ -4,7 +4,7 @@
 
 Built with Next.js 16, React 19, Tailwind CSS 4, TypeScript and Supabase. Matching needs no backend; accounts use a separately configured Supabase project.
 
-**Live:** [morphmatch.vercel.app](https://morphmatch.vercel.app). Matching, browsing, comparisons and sharing are available. The account release is staged with production settings; public activation awaits resolution of the iCloud sender's storage limit. See the [launch record](docs/LAUNCH.md) for current services, verification and remaining setup.
+**Live — 16 October 2026:** [morphmatch.vercel.app](https://morphmatch.vercel.app). Email/password accounts and saved comparisons are available alongside matching, browsing and sharing. Public signup is enabled and email confirmation is required. See the [launch record](docs/LAUNCH.md) for Gmail SMTP configuration, verification and operational limits.
 
 ## Features
 
@@ -101,7 +101,7 @@ The anon key is safe to expose in the browser — that's what it's for; data acc
 4. If you want accounts, configure the Supabase public URL/key in the hosting environment, apply all database migrations, configure SMTP and callback URLs as above, then redeploy. Leave the Supabase variables empty for a public matching-only site.
 5. Run the verification commands below, then configure the real hosted environment and run `npm run prepare:production` to create the final artifact. After deployment, test the public domain, real phone sharing, sign-up confirmation/resend, recovery, save/reopen/delete and sign-out. Local credentials are for local development only.
 
-The phased implementation and earlier verification evidence are in [`docs/PRODUCTION_READINESS.md`](docs/PRODUCTION_READINESS.md). The existing public deployment and remaining account activation steps are recorded in [`docs/LAUNCH.md`](docs/LAUNCH.md). The instructions above also cover setting up a separate deployment.
+The phased implementation and earlier verification evidence are in [`docs/PRODUCTION_READINESS.md`](docs/PRODUCTION_READINESS.md). The current public deployment, hosted account configuration and operational checks are recorded in [`docs/LAUNCH.md`](docs/LAUNCH.md). The instructions above also cover setting up a separate deployment.
 
 The included GitHub Actions workflow ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs lint, types, formatting, regression checks, a production build, production dependency auditing and browser tests on pushes and pull requests. Its build explicitly disables accounts to exercise that supported deployment mode.
 
@@ -114,7 +114,7 @@ npx playwright install chromium webkit
 npm run test:e2e
 ```
 
-Browser tests use port 3100 (override with `MORPHMATCH_E2E_PORT` when it is occupied) and mock third-party photo outages so results do not depend on Wikipedia uptime. On Linux, browser libraries can be installed with `npx playwright install --with-deps chromium webkit`. The device projects emulate mobile browsers; they do not certify physical phones or native app packages. For local account integration checks, start Supabase and run `npm run test:accounts`; the script uses disposable users, verifies ownership isolation and cleans them up without resetting the database. Hosted OAuth and email delivery still require verification with your production configuration.
+Browser tests use port 3100 (override with `MORPHMATCH_E2E_PORT` when it is occupied) and mock third-party photo outages so results do not depend on Wikipedia uptime. On Linux, browser libraries can be installed with `npx playwright install --with-deps chromium webkit`. The device projects emulate mobile browsers; they do not certify physical phones or native app packages. For local account integration checks, start Supabase and run `npm run test:accounts`; the script uses disposable users, verifies ownership isolation and cleans them up without resetting the database. A separate deployment needs its own hosted email checks and OAuth verification if enabled. The launch record distinguishes the current hosted checks from inbox receipt, which remains unverified and was explicitly waived by the owner.
 
 With `.env.local` configured for the running local Supabase stack, verify the complete account and recovery UI with:
 
@@ -124,9 +124,9 @@ MORPHMATCH_ACCOUNTS_E2E=1 npm run test:e2e -- tests/accounts.spec.ts --workers=1
 
 This uses disposable local accounts and the local email inbox, including changing a password through a recovery email. It does not reset the database. Rebuild before switching between tests that enable or disable accounts; `PLAYWRIGHT_SKIP_BUILD=1` is only for an already matching build.
 
-The full development dependency audit currently reports an unresolved [`braces` denial-of-service advisory](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm) through Next.js's ESLint tooling. No fixed upstream `braces` release is available in this chain as of 11 October 2026. Production dependencies pass `npm audit --omit=dev`; do not use `npm audit fix --force` to downgrade Next.js tooling. Review dependency alerts as upstream fixes become available.
+The 16 October 2026 dependency audit reported zero production vulnerabilities and five high-severity development-only reports in the [`braces` dependency chain](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm) through Next.js's ESLint tooling. The advisory still lists no patched version, and npm's proposed older Next.js lint configuration is incompatible with this setup. Recheck compatible upstream fixes during maintenance; do not use `npm audit fix --force` to downgrade Next.js tooling.
 
-ESLint 9 has also [reached end of life](https://eslint.org/version-support/). The current Next.js configuration bundles React and accessibility plugins whose peer dependencies do not support ESLint 10 yet. The compatible lint setup is retained and verified; upgrade it when those plugins support the current ESLint release.
+At the 11 October review, ESLint 9 had [reached end of life](https://eslint.org/version-support/), while the bundled React and accessibility plugins declared peer support through ESLint 9. The compatible lint setup was retained and verified. Recheck plugin compatibility before upgrading the lint toolchain.
 
 ### Pushing to GitHub
 
